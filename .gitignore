@@ -4,6 +4,7 @@ __pycache__/**
 .vscode/**
 .DS_Store/**
 .env/**
+*.env*
 fhenv/**
 .sesskey
 cursor-0.39.5x86_64.AppImage
