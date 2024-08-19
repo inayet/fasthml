@@ -8,7 +8,9 @@ __pycache__/**
 .env
 fhenv/**
 .sesskey
+*cursor-0.*
 cursor-0.39.5x86_64.AppImage
+cursor-0.39.6-build-240819ih4ta2fye-x86_64.AppImage
 qodana.yaml
 .qodana/**
 .idea/**
