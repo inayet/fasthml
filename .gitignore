@@ -1,4 +1,5 @@
 __pycache__/**
+*__pycache__/**
 .github/**
 .idea/**
 .vscode/**
@@ -15,4 +16,8 @@ qodana.yaml
 data/**
 .git/**
 *qodana*
+app/data/**
+app/data/utodos.db
+app/__pycache__
+app/__pycache__/main.cpython-312.pyc
 
