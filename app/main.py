@@ -48,6 +48,7 @@ app = FastHTML(
         SortableJS(".sortable"),
         Script(markdown_js, type="module"),
     ),
+    live=true
 )
 # db.execute('DROP TABLE users')
 
@@ -90,10 +91,39 @@ def post(login: Login, sess):
 
     return RedirectResponse("/", status_code=303)
 
-    #
+@app.get("/logout")
+def logout(sess):
+    del sess['auth']
+    return login_redir
+
+@rt("/{fname:path}.{ext:static}")
+async def get(fname:str, ext:str): return FileResponse(f'{fname}.{ext}')
+
+@patch
+def __ft__(self:Todo):
+    show = AX(self.title, f'/todos/{self.id}', 'current-todo')
+    edit = AX('edit', f'/edit/{self.id}', 'current-todo')
+    dt = AX('✅ ' if self.done else '')
+
+    cts = (dt, show, '|', edit, Hidden(id="id", value=self.id), Hidden(id="priority", value=0))
+
+    return Li(*cts, id=f'todo-{self.id}')
+
+@rt("/")
+def get(auth):
+    title = f"{auth}'s Todo List"
+    top = Grid(H1(title), Div(A('logout', href='/logout'), sytle='text-align=right'))
+
+    new_inp = Input(id="new-title", name="title", placeholder="New Todo") 
+    add = Form(Group(new_inp, Button("Add")),
+               hx_post="/", target_id='todo-list', hx_swap="afterbegin")
+    
+    frm = Form(*todos(order_by='priority'),
+               id='todo-list', cls='sortable', hx_post="/reorder", hx_trigger="end")
+    card = Card(Ul(frm), header=add, footer=Div(id='current-todo'))
+
+    return Title(title), Container(top, card)
 
 
-# @rt('/')
-# def get(): return Div(P('Hello World!'), hx_get="/change")
-#
+
 serve()
