@@ -124,6 +124,11 @@ def get(auth):
 
     return Title(title), Container(top, card)
 
+@rt("/reorder")
+def post(id:list[int]):
+    for i, id_ in enumerate(id): todos.update({'priority':i}, id_)
+    return tuple(todos(order_by='priority'))
 
+def clr_details(): return Div(hx_swap_oob='innerHTML', id='current-todo')
 
 serve()
