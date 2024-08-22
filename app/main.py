@@ -2,6 +2,17 @@
 
 from fasthtml.common import *
 
+"""
+from fasthtml.common import (
+    # These are the HTML components we use in this app
+    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group, H1, H2, Hidden, Input, Li, Main, Script, Style, Textarea, Title, Titled, Ul,
+    # These are FastHTML symbols we'll use
+    Beforeware, fast_app, SortableJS, fill_form, picolink, serve,
+    # These are from Starlette, Fastlite, fastcore, and the Python stdlib
+    FileResponse, NotFoundError, RedirectResponse, database, patch, dataclass
+)
+"""
+
 from hmac import compare_digest
 
 db = database("data/utodos.db")
@@ -48,9 +59,9 @@ app = FastHTML(
         picolink,
         Style(":root { --pico-font-size: 100%}"),
         SortableJS(".sortable"),
-        Script(markdown_js, type="module"),
-    ),
-    live=true
+        Script(markdown_js, type="module")
+        )
+        
 )
 # db.execute('DROP TABLE users')
 
@@ -93,73 +104,111 @@ def post(login: Login, sess):
 
     return RedirectResponse("/", status_code=303)
 
+
 @app.get("/logout")
 def logout(sess):
-    del sess['auth']
+    del sess["auth"]
     return login_redir
 
+
 @rt("/{fname:path}.{ext:static}")
-async def get(fname:str, ext:str): return FileResponse(f'{fname}.{ext}')
+async def get(fname: str, ext: str):
+    return FileResponse(f"{fname}.{ext}")
+
 
 @patch
-def __ft__(self:Todo):
+def __ft__(self: Todo):
     show = AX(self.title, f'/todos/{self.id}', 'current-todo')
     edit = AX('edit', f'/edit/{self.id}', 'current-todo')
-    dt = AX('✅ ' if self.done else '')
+    dt = '✅ ' if self.done else ''
 
-    cts = (dt, show, '|', edit, Hidden(id="id", value=self.id), Hidden(id="priority", value=0))
+    cts = (
+        dt,
+        show,
+        '|',
+        edit,
+        Hidden(id="id", value=self.id),
+        Hidden(id="priority", value="0"),
+    )
 
     return Li(*cts, id=f'todo-{self.id}')
+
 
 @rt("/")
 def get(auth):
     title = f"{auth}'s Todo List"
-    top = Grid(H1(title), Div(A('logout', href='/logout'), sytle='text-align=right'))
+    top = Grid(H1(title), Div(A("logout", href="/logout"), sytle="text-align: right"))
 
-    new_inp = Input(id="new-title", name="title", placeholder="New Todo") 
-    add = Form(Group(new_inp, Button("Add")),
-               hx_post="/", target_id='todo-list', hx_swap="afterbegin")
-    
-    frm = Form(*todos(order_by='priority'),
-               id='todo-list', cls='sortable', hx_post="/reorder", hx_trigger="end")
-    card = Card(Ul(frm), header=add, footer=Div(id='current-todo'))
+    new_inp = Input(id="new-title", name="title", placeholder="New Todo")
+    add = Form(
+        Group(new_inp, Button("Add")),
+        hx_post="/",
+        target_id="todo-list",
+        hx_swap="afterbegin"
+    )
+
+    frm = Form(
+        *todos(order_by="priority"),
+        id="todo-list",
+        cls="sortable",
+        hx_post="/reorder",
+        hx_trigger="end",
+    )
+    card = Card(Ul(frm), header=add, footer=Div(id="current-todo"))
 
     return Title(title), Container(top, card)
 
-@rt("/reorder")
-def post(id:list[int]):
-    for i, id_ in enumerate(id): todos.update({'priority':i}, id_)
-    return tuple(todos(order_by='priority'))
 
-def clr_details(): return Div(hx_swap_oob='innerHTML', id='current-todo')
+@rt("/reorder")
+def post(id: list[int]):
+    for i, id_ in enumerate(id):
+        todos.update({"priority": i}, id_)
+    return tuple(todos(order_by="priority"))
+
+
+def clr_details():
+    return Div(hx_swap_oob="innerHTML", id="current-todo")
 
 @rt("/todos/{id}")
-def delete(id:int):
+def delete(id: int):
     todos.delete(id)
     return clr_details()
 
+
 @rt("/edit/{id}")
 async def get(id:int):
-    res = Form(Group(Input(id="title"), Button("Save")),
-               Hidden(id="id"), Checkbox(id="done", label="Done"),
-               Textarea(id="details", name="details", rows=10),
-               hx_put="/", target_id=f'todo-{id}', id="edit")
+
+    res = Form(
+        Group(Input(id="title"), Button("Save")),
+        Hidden(id="id"),
+        Textarea(id="details", name="details", rows=10),
+        hx_put="/", target_id=f'todo-{id}', id="edit")
+    
     return fill_form(res, todos[id])
+
 
 @rt("/")
 async def put(todo: Todo):
     return todos.update(todo), clr_details()
 
+
 @rt("/")
 async def post(todo: Todo):
-    new_inp = Input(id="new-title", name="title", placeholder="New Todo", hx_swap='true')
+    new_inp = Input(
+        id="new-title", name="title", placeholder="New Todo", hx_swap_oob="true"
+    )
     return todos.insert(todo), new_inp
+
 
 @rt("/todos/{id}")
 async def get(id:int):
-    todo = todo[id]
-    btn = Button('delete', hx_delete=f'/todos/{todo.id}',
-                 hx_target=f'todo-{todo.id}', hx_swap="outerHtml")
+    todo = todos[id]
+    btn = Button(
+        'delete',
+        hx_delete=f'/todos/{todo.id}',
+        target_id=f'todo-{todo.id}',
+        hx_swap="innerHTML"
+    )
     return Div(H2(todo.title), Div(todo.details, cls="markdown"), btn)
 
 
