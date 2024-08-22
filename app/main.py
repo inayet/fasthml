@@ -1,3 +1,5 @@
+## exmaple from https://github.com/AnswerDotAI/fasthtml/blob/main/examples/adv_app.py
+
 from fasthtml.common import *
 
 from hmac import compare_digest
@@ -130,5 +132,35 @@ def post(id:list[int]):
     return tuple(todos(order_by='priority'))
 
 def clr_details(): return Div(hx_swap_oob='innerHTML', id='current-todo')
+
+@rt("/todos/{id}")
+def delete(id:int):
+    todos.delete(id)
+    return clr_details()
+
+@rt("/edit/{id}")
+async def get(id:int):
+    res = Form(Group(Input(id="title"), Button("Save")),
+               Hidden(id="id"), Checkbox(id="done", label="Done"),
+               Textarea(id="details", name="details", rows=10),
+               hx_put="/", target_id=f'todo-{id}', id="edit")
+    return fill_form(res, todos[id])
+
+@rt("/")
+async def put(todo: Todo):
+    return todos.update(todo), clr_details()
+
+@rt("/")
+async def post(todo: Todo):
+    new_inp = Input(id="new-title", name="title", placeholder="New Todo", hx_swap='true')
+    return todos.insert(todo), new_inp
+
+@rt("/todos/{id}")
+async def get(id:int):
+    todo = todo[id]
+    btn = Button('delete', hx_delete=f'/todos/{todo.id}',
+                 hx_target=f'todo-{todo.id}', hx_swap="outerHtml")
+    return Div(H2(todo.title), Div(todo.details, cls="markdown"), btn)
+
 
 serve()
